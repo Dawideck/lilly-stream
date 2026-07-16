@@ -63,6 +63,28 @@ def test_get_twilight_window_falls_back_to_cache_on_fetch_failure(tmp_path):
     assert result == cached
 
 
+def test_get_twilight_window_reuses_cache_same_day_without_refetching(tmp_path):
+    cache = SuntimesCache(tmp_path / "sun_times.json")
+    fetched = make_window(date(2026, 7, 16))
+    call_count = 0
+
+    def counting_fetch(lat, lon, d):
+        nonlocal call_count
+        call_count += 1
+        return fetched
+
+    result1 = get_twilight_window(
+        54.1755, 15.5836, date(2026, 7, 16), cache, fetch_fn=counting_fetch
+    )
+    result2 = get_twilight_window(
+        54.1755, 15.5836, date(2026, 7, 16), cache, fetch_fn=counting_fetch
+    )
+
+    assert result1 == fetched
+    assert result2 == fetched
+    assert call_count == 1
+
+
 def test_get_twilight_window_raises_when_no_cache_and_fetch_fails(tmp_path):
     cache = SuntimesCache(tmp_path / "sun_times.json")
 

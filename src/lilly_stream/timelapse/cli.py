@@ -53,11 +53,13 @@ def main() -> None:
 
     output_path = Path(filename)
     if fmt in ("mp4", "both"):
-        mp4_path = output_path if fmt == "mp4" else output_path.with_suffix(".mp4")
+        mp4_path = output_path.with_suffix(".mp4")
+        print(f"Building mp4 from {len(entries)} frames...")
         build_mp4(entries, mp4_path, fps)
         print(f"Wrote {mp4_path}")
     if fmt in ("gif", "both"):
-        gif_path = output_path if fmt == "gif" else output_path.with_suffix(".gif")
+        gif_path = output_path.with_suffix(".gif")
+        print(f"Building gif from {len(entries)} frames...")
         build_gif(entries, gif_path, fps)
         print(f"Wrote {gif_path}")
 

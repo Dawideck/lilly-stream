@@ -25,7 +25,8 @@
 
 ## macOS / any machine (timelapse builder only)
 
-1. Install `ffmpeg`: `brew install ffmpeg`.
-2. `python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"`.
-3. Copy photos from the Pi (e.g. `scp -r pi@<pi-host>:/home/pi/lilly-stream/photos ./photos`).
-4. Run `lilly-timelapse` and follow the interactive prompts.
+1. Clone this repo and `cd` into it: `git clone <repo-url> lilly-stream && cd lilly-stream`.
+2. Install `ffmpeg`: `brew install ffmpeg`.
+3. `python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"`.
+4. Copy photos from the Pi (e.g. `scp -r pi@<pi-host>:/home/pi/lilly-stream/photos ./photos`).
+5. Run `lilly-timelapse` and follow the interactive prompts.

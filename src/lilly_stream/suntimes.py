@@ -85,6 +85,10 @@ def get_twilight_window(
     cache: SuntimesCache,
     fetch_fn=fetch_twilight,
 ) -> TwilightWindow:
+    cached = cache.load()
+    if cached is not None and cached.date == for_date:
+        return cached
+
     try:
         window = fetch_fn(lat, lon, for_date)
     except Exception as exc:

@@ -40,6 +40,21 @@ def test_list_photos_empty_dir_returns_empty_list(tmp_path):
     assert list_photos(tmp_path / "missing") == []
 
 
+def test_list_photos_skips_malformed_filename_without_crashing(tmp_path):
+    (tmp_path / "2026-07-15").mkdir()
+    (tmp_path / "2026-07-15" / "080000.jpg").write_bytes(b"")
+    (tmp_path / "2026-07-15" / "not-a-time.jpg").write_bytes(b"")
+    (tmp_path / "2026-07-16").mkdir()
+    (tmp_path / "2026-07-16" / "090000.jpg").write_bytes(b"")
+
+    result = list_photos(tmp_path)
+
+    assert result == [
+        tmp_path / "2026-07-15" / "080000.jpg",
+        tmp_path / "2026-07-16" / "090000.jpg",
+    ]
+
+
 def test_available_dates_counts_per_day(tmp_path):
     (tmp_path / "2026-07-16").mkdir()
     (tmp_path / "2026-07-16" / "090000.jpg").write_bytes(b"")

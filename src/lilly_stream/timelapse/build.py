@@ -19,8 +19,8 @@ def build_mp4(entries: list[PhotoEntry], output_path: Path, fps: int) -> None:
         f.write(f"file '{entries[-1].path.resolve()}'\n")
         filelist_path = f.name
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
     try:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         subprocess.run(
             [
                 "ffmpeg", "-y",
@@ -37,13 +37,28 @@ def build_mp4(entries: list[PhotoEntry], output_path: Path, fps: int) -> None:
         Path(filelist_path).unlink()
 
 
+GIF_FRAME_WARNING_THRESHOLD = 300
+
+
 def build_gif(entries: list[PhotoEntry], output_path: Path, fps: int) -> None:
     if not entries:
         raise ValueError("No entries to build a GIF from")
 
     from PIL import Image
 
-    frames = [Image.open(entry.path) for entry in entries]
+    if len(entries) > GIF_FRAME_WARNING_THRESHOLD:
+        print(
+            f"Warning: building a GIF from {len(entries)} frames loads all of them into "
+            "memory at once — this may exhaust memory on a Raspberry Pi Zero W. "
+            "Consider thinning your selection first."
+        )
+
+    frames = []
+    for i, entry in enumerate(entries):
+        if i % 50 == 0:
+            print(f"  {i}/{len(entries)} frames processed")
+        frames.append(Image.open(entry.path))
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     frames[0].save(
         output_path,

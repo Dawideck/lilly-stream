@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import logging
 import shutil
 from datetime import datetime
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 
 def photo_path(storage_dir: Path, timestamp: datetime) -> Path:
@@ -19,7 +22,14 @@ def parse_timestamp(path: Path) -> datetime:
 def list_photos(storage_dir: Path) -> list[Path]:
     if not storage_dir.exists():
         return []
-    return sorted(storage_dir.glob("*/*.jpg"), key=parse_timestamp)
+    dated: list[tuple[Path, datetime]] = []
+    for path in storage_dir.glob("*/*.jpg"):
+        try:
+            dated.append((path, parse_timestamp(path)))
+        except ValueError:
+            log.warning(f"Skipping photo with unparseable timestamp: {path}")
+    dated.sort(key=lambda item: item[1])
+    return [path for path, _ in dated]
 
 
 def available_dates(storage_dir: Path) -> dict[str, int]:

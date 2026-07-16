@@ -58,12 +58,18 @@ def select_thinning(entries: list[PhotoEntry], fps: int, input_fn=input) -> list
         input_fn,
     )
     if choice == 0:
-        return entries
+        result = entries
+        print(f"Selected {len(result)} frames (~{len(result) / fps:.1f}s at {fps}fps)")
+        return result
     if choice == 1:
         n = prompt_int("Include every Nth photo (N):", minimum=1, input_fn=input_fn)
-        return thin_every_nth(entries, n)
+        result = thin_every_nth(entries, n)
+        print(f"Selected {len(result)} frames (~{len(result) / fps:.1f}s at {fps}fps)")
+        return result
     target = prompt_int("Target total frame count:", minimum=1, input_fn=input_fn)
-    return thin_to_target_count(entries, target)
+    result = thin_to_target_count(entries, target)
+    print(f"Selected {len(result)} frames (~{len(result) / fps:.1f}s at {fps}fps)")
+    return result
 
 
 def select_fps(input_fn=input) -> int:
