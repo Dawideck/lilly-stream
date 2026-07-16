@@ -1,0 +1,15 @@
+[Unit]
+Description=lilly-stream capture daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/lilly-stream
+ExecStart=/home/pi/lilly-stream/.venv/bin/lilly-capture
+Restart=on-failure
+RestartSec=10
+User=pi
+
+[Install]
+WantedBy=multi-user.target
