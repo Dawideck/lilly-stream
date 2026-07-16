@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import requests
+
+log = logging.getLogger(__name__)
 
 LOCAL_TZ = ZoneInfo("Europe/Warsaw")
 API_URL = "https://api.sunrise-sunset.org/json"
@@ -81,7 +84,8 @@ def get_twilight_window(
 ) -> TwilightWindow:
     try:
         window = fetch_fn(lat, lon, for_date)
-    except Exception:
+    except Exception as exc:
+        log.warning(f"Failed to fetch twilight times for {for_date}: {exc}")
         cached = cache.load()
         if cached is not None:
             return cached
