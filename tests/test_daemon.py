@@ -134,8 +134,11 @@ def test_day_rollover_sends_summary_and_resets_state(tmp_path):
     handle_tick(now=datetime(2026, 7, 17, 12, 0, tzinfo=WARSAW), config=config, camera=camera,
                 mailer=mailer, suntimes_cache=cache, day_state_store=store, fetch_fn=fetch_fn)
 
-    summaries = [s for s, _, _ in mailer.sent if "summary" in s.lower()]
+    summaries = [(s, b) for s, b, _ in mailer.sent if "summary" in s.lower()]
     assert len(summaries) == 1
+    subject, body = summaries[0]
+    assert "disk" in body.lower()
+    assert "MB" in body
     state = store.load()
     assert state.date == date(2026, 7, 17)
     assert state.photos_taken == 1

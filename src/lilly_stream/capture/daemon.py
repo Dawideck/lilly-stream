@@ -21,9 +21,9 @@ from lilly_stream.suntimes import (
 log = logging.getLogger(__name__)
 
 
-def _summary_email(state: DayState) -> tuple[str, str]:
+def _summary_email(state: DayState, free_mb: float) -> tuple[str, str]:
     subject = f"Daily summary - {state.date.isoformat()}"
-    body = f"Photos taken: {state.photos_taken}\nPhotos failed: {state.photos_failed}\n"
+    body = f"Photos taken: {state.photos_taken}\nPhotos failed: {state.photos_failed}\nFree disk space: {free_mb:.0f}MB\n"
     return subject, body
 
 
@@ -43,7 +43,8 @@ def handle_tick(
     if stored is None:
         state = DayState(date=today)
     elif stored.date != today:
-        subject, body = _summary_email(stored)
+        free_mb = free_space_mb(config.capture.storage_dir)
+        subject, body = _summary_email(stored, free_mb)
         mailer.send(subject, body)
         state = DayState(date=today)
     else:
