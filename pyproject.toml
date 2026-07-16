@@ -1,0 +1,27 @@
+[project]
+name = "lilly-stream"
+version = "0.1.0"
+description = "Flower-blooming timelapse: Pi camera capture daemon + timelapse builder"
+requires-python = ">=3.9"
+dependencies = [
+    "pyyaml>=6.0",
+    "requests>=2.31",
+    "Pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+lilly-capture = "lilly_stream.capture.cli:main"
+lilly-timelapse = "lilly_stream.timelapse.cli:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

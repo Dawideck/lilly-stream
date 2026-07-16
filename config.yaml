@@ -1,0 +1,11 @@
+location:
+  name: "Kolobrzeg, PL"
+  lat: 54.1755
+  lon: 15.5836
+capture:
+  interval_minutes: 10
+  storage_dir: "./photos"
+disk:
+  warn_threshold_mb: 500
+alerts:
+  recipient: "you@example.com"

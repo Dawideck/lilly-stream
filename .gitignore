@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+photos/
+state/
+secrets.yaml
+*.mp4
+*.gif
