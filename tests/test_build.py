@@ -1,4 +1,6 @@
 import shutil
+import tempfile
+from pathlib import Path
 
 import pytest
 from PIL import Image
@@ -33,9 +35,19 @@ def test_build_gif_raises_on_empty_entries(tmp_path):
 def test_build_mp4_creates_file(tmp_path):
     entries = make_fake_photos(tmp_path, 3)
     output = tmp_path / "out.mp4"
+
+    # Capture temp txt files before the call
+    temp_dir = Path(tempfile.gettempdir())
+    txt_files_before = set(temp_dir.glob("*.txt"))
+
     build_mp4(entries, output, fps=10)
+
     assert output.exists()
     assert output.stat().st_size > 0
+
+    # Verify temp file was cleaned up
+    txt_files_after = set(temp_dir.glob("*.txt"))
+    assert len(txt_files_after) == len(txt_files_before), "Temp file was not cleaned up"
 
 
 def test_build_mp4_raises_on_empty_entries(tmp_path):
