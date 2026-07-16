@@ -35,7 +35,10 @@ class DayStateStore:
     def load(self) -> DayState | None:
         if not self.path.exists():
             return None
-        return DayState.from_dict(json.loads(self.path.read_text()))
+        try:
+            return DayState.from_dict(json.loads(self.path.read_text()))
+        except json.JSONDecodeError:
+            return None
 
     def save(self, state: DayState) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

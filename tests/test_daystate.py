@@ -21,3 +21,10 @@ def test_store_round_trip(tmp_path):
 def test_store_load_missing_returns_none(tmp_path):
     store = DayStateStore(tmp_path / "day_state.json")
     assert store.load() is None
+
+
+def test_store_load_corrupted_json_returns_none(tmp_path):
+    store = DayStateStore(tmp_path / "day_state.json")
+    # Write invalid/truncated JSON to simulate power loss during write
+    (tmp_path / "day_state.json").write_text('{"date": "2026-07-16", "photos_taken": 5')
+    assert store.load() is None

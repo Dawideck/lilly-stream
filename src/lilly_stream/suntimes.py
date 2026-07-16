@@ -68,7 +68,10 @@ class SuntimesCache:
     def load(self) -> TwilightWindow | None:
         if not self.cache_path.exists():
             return None
-        return TwilightWindow.from_dict(json.loads(self.cache_path.read_text()))
+        try:
+            return TwilightWindow.from_dict(json.loads(self.cache_path.read_text()))
+        except json.JSONDecodeError:
+            return None
 
     def save(self, window: TwilightWindow) -> None:
         self.cache_path.parent.mkdir(parents=True, exist_ok=True)

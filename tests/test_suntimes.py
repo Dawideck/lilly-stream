@@ -34,6 +34,13 @@ def test_cache_load_missing_returns_none(tmp_path):
     assert cache.load() is None
 
 
+def test_cache_load_corrupted_json_returns_none(tmp_path):
+    cache = SuntimesCache(tmp_path / "sun_times.json")
+    # Write invalid/truncated JSON to simulate power loss during write
+    (tmp_path / "sun_times.json").write_text('{"date": "2026-07-16", "civil_dawn": "2026-07-16T05:00:00')
+    assert cache.load() is None
+
+
 def test_get_twilight_window_uses_fetch_and_caches(tmp_path):
     cache = SuntimesCache(tmp_path / "sun_times.json")
     fetched = make_window(date(2026, 7, 16))
