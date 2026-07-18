@@ -20,7 +20,10 @@ def main() -> None:
     config = load_config(args.config)
     camera = Camera()
     app = create_app(camera, tmp_dir=args.tmp_dir, storage_dir=config.capture.storage_dir)
-    app.run(host="0.0.0.0", port=args.port)
+    try:
+        app.run(host="0.0.0.0", port=args.port)
+    finally:
+        camera.close()
 
 
 if __name__ == "__main__":

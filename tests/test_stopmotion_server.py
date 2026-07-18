@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import zipfile
-from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -126,3 +125,40 @@ def test_photos_endpoint_empty_range_returns_empty_zip(tmp_path):
     assert response.status_code == 200
     archive = zipfile.ZipFile(BytesIO(response.data))
     assert archive.namelist() == []
+
+
+def test_photos_endpoint_malformed_date_returns_400(tmp_path):
+    storage_dir = tmp_path / "photos"
+    make_photo(storage_dir, "2026-07-15", "090000")
+
+    app = create_app(
+        FakeCamera(),
+        tmp_dir=tmp_path / "tmp",
+        storage_dir=storage_dir,
+    )
+    client = app.test_client()
+
+    response = client.get("/photos?start=not-a-date&end=2026-07-16")
+
+    assert response.status_code == 400
+
+
+def test_photos_endpoint_cleans_up_temp_zip_file(tmp_path):
+    storage_dir = tmp_path / "photos"
+    tmp_dir = tmp_path / "tmp"
+    make_photo(storage_dir, "2026-07-15", "090000")
+    make_photo(storage_dir, "2026-07-16", "090000")
+
+    app = create_app(
+        FakeCamera(),
+        tmp_dir=tmp_dir,
+        storage_dir=storage_dir,
+    )
+    client = app.test_client()
+
+    before = set(tmp_dir.glob("*.zip"))
+    response = client.get("/photos?start=2026-07-15&end=2026-07-16")
+    after = set(tmp_dir.glob("*.zip"))
+
+    assert response.status_code == 200
+    assert after == before

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import io
 import uuid
 import zipfile
 from datetime import date
@@ -41,17 +40,23 @@ def create_app(camera, *, tmp_dir: Path, storage_dir: Path) -> Flask:
 
     @app.route("/photos", methods=["GET"])
     def photos():
-        start = date.fromisoformat(request.args["start"])
-        end = date.fromisoformat(request.args["end"])
+        try:
+            start = date.fromisoformat(request.args["start"])
+            end = date.fromisoformat(request.args["end"])
+        except ValueError:
+            return {"error": "start and end must be ISO dates (YYYY-MM-DD)"}, 400
+
         entries = list_entries_in_range(storage_dir, start, end)
 
-        buffer = io.BytesIO()
-        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-            for entry in entries:
-                arcname = f"{entry.path.parent.name}/{entry.path.name}"
-                zf.write(entry.path, arcname=arcname)
-        buffer.seek(0)
+        zip_path = tmp_dir / f"photos-{uuid.uuid4()}.zip"
+        try:
+            with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_STORED) as zf:
+                for entry in entries:
+                    arcname = f"{entry.path.parent.name}/{entry.path.name}"
+                    zf.write(entry.path, arcname=arcname)
 
-        return send_file(buffer, mimetype="application/zip", download_name="photos.zip")
+            return send_file(zip_path, mimetype="application/zip", download_name="photos.zip")
+        finally:
+            zip_path.unlink()
 
     return app
