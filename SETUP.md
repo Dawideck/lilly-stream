@@ -23,6 +23,23 @@
 10. Confirm end-to-end: wait for the next daylight tick and check that a photo appears
     under `photos/<today>/` and a "First photo of the day" email arrives.
 
+## Raspberry Pi (stop-motion server)
+
+This reuses the same venv and camera as the capture daemon above — no separate
+install needed beyond re-running `pip install -e .` to pick up the new `Flask`
+dependency (already done if you followed the capture daemon steps after this was
+added).
+
+1. From `/home/pi/lilly-stream` (or wherever you cloned the repo) with the venv
+   active: `lilly-stopmotion-server`. It listens on port 5000 by default.
+2. From another machine on the same network, confirm it's reachable:
+   `curl -X POST http://<pi-host-or-ip>:5000/snapshot -o test-snapshot.jpg`
+3. To pull a date range of the capture daemon's photos without `scp`:
+   `curl "http://<pi-host-or-ip>:5000/photos?start=2026-07-01&end=2026-07-18" -o photos.zip`
+
+No systemd service yet for this one — run it in a terminal (or `tmux`/`screen`
+session) for now while the stop-motion Mac GUI (a later phase) is in development.
+
 ## macOS / any machine (timelapse builder only)
 
 1. Clone this repo and `cd` into it: `git clone <repo-url> lilly-stream && cd lilly-stream`.

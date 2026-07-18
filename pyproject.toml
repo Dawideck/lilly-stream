@@ -7,6 +7,7 @@ dependencies = [
     "pyyaml>=6.0",
     "requests>=2.31",
     "Pillow>=10.0",
+    "Flask>=3.0",
 ]
 
 [project.optional-dependencies]
@@ -15,6 +16,7 @@ dev = ["pytest>=7.0"]
 [project.scripts]
 lilly-capture = "lilly_stream.capture.cli:main"
 lilly-timelapse = "lilly_stream.timelapse.cli:main"
+lilly-stopmotion-server = "lilly_stream.stopmotion.cli:main"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
