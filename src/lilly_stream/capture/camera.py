@@ -22,5 +22,13 @@ class Camera:
         except Exception as exc:
             raise CameraError(f"Failed to capture photo to {path}: {exc}") from exc
 
+    def capture_preview(self, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            preview_config = self._picam.create_preview_configuration()
+            self._picam.switch_mode_and_capture_file(preview_config, str(path))
+        except Exception as exc:
+            raise CameraError(f"Failed to capture preview to {path}: {exc}") from exc
+
     def close(self) -> None:
         self._picam.stop()
