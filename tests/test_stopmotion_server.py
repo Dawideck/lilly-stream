@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import zipfile
+from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 
 from lilly_stream.stopmotion.server import create_app
@@ -76,3 +79,50 @@ def test_delete_photo_missing_id_is_idempotent(tmp_path):
     response = client.delete("/photo/does-not-exist")
 
     assert response.status_code == 204
+
+
+def make_photo(storage_dir: Path, day: str, time_str: str) -> None:
+    day_dir = storage_dir / day
+    day_dir.mkdir(parents=True, exist_ok=True)
+    (day_dir / f"{time_str}.jpg").write_bytes(b"fake-jpeg-data")
+
+
+def test_photos_endpoint_returns_zip_of_matching_date_range(tmp_path):
+    storage_dir = tmp_path / "photos"
+    make_photo(storage_dir, "2026-07-15", "090000")
+    make_photo(storage_dir, "2026-07-16", "090000")
+    make_photo(storage_dir, "2026-07-17", "090000")
+
+    app = create_app(
+        FakeCamera(),
+        tmp_dir=tmp_path / "tmp",
+        storage_dir=storage_dir,
+    )
+    client = app.test_client()
+
+    response = client.get("/photos?start=2026-07-15&end=2026-07-16")
+
+    assert response.status_code == 200
+    assert response.mimetype == "application/zip"
+    archive = zipfile.ZipFile(BytesIO(response.data))
+    names = sorted(archive.namelist())
+    assert names == ["2026-07-15/090000.jpg", "2026-07-16/090000.jpg"]
+    assert archive.read("2026-07-15/090000.jpg") == b"fake-jpeg-data"
+
+
+def test_photos_endpoint_empty_range_returns_empty_zip(tmp_path):
+    storage_dir = tmp_path / "photos"
+    make_photo(storage_dir, "2026-07-15", "090000")
+
+    app = create_app(
+        FakeCamera(),
+        tmp_dir=tmp_path / "tmp",
+        storage_dir=storage_dir,
+    )
+    client = app.test_client()
+
+    response = client.get("/photos?start=2026-08-01&end=2026-08-02")
+
+    assert response.status_code == 200
+    archive = zipfile.ZipFile(BytesIO(response.data))
+    assert archive.namelist() == []

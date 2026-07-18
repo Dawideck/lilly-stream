@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import io
 import uuid
+import zipfile
+from datetime import date
 from pathlib import Path
 
-from flask import Flask, Response, send_file
+from flask import Flask, Response, request, send_file
+
+from lilly_stream.timelapse.selection import list_entries_in_range
 
 
 def create_app(camera, *, tmp_dir: Path, storage_dir: Path) -> Flask:
@@ -33,5 +38,20 @@ def create_app(camera, *, tmp_dir: Path, storage_dir: Path) -> Flask:
         if photo_path.exists():
             photo_path.unlink()
         return "", 204
+
+    @app.route("/photos", methods=["GET"])
+    def photos():
+        start = date.fromisoformat(request.args["start"])
+        end = date.fromisoformat(request.args["end"])
+        entries = list_entries_in_range(storage_dir, start, end)
+
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            for entry in entries:
+                arcname = f"{entry.path.parent.name}/{entry.path.name}"
+                zf.write(entry.path, arcname=arcname)
+        buffer.seek(0)
+
+        return send_file(buffer, mimetype="application/zip", download_name="photos.zip")
 
     return app
