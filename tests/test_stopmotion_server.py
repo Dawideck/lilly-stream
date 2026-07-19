@@ -26,10 +26,14 @@ class FakeCamera:
 def make_app(tmp_path, camera=None):
     camera = camera or FakeCamera()
     return create_app(
-        camera,
+        lambda: camera,
         tmp_dir=tmp_path / "tmp",
         storage_dir=tmp_path / "photos",
     )
+
+
+def _unused_camera():
+    raise AssertionError("camera should not be constructed for this route")
 
 
 def test_snapshot_returns_image_bytes_and_cleans_up(tmp_path):
@@ -80,6 +84,41 @@ def test_delete_photo_missing_id_is_idempotent(tmp_path):
     assert response.status_code == 204
 
 
+def test_snapshot_returns_503_with_message_when_camera_unavailable(tmp_path):
+    def get_camera():
+        raise RuntimeError("Device or resource busy")
+
+    app = create_app(get_camera, tmp_dir=tmp_path / "tmp", storage_dir=tmp_path / "photos")
+    client = app.test_client()
+
+    response = client.post("/snapshot")
+
+    assert response.status_code == 503
+    assert "busy" in response.get_json()["error"]
+
+
+def test_capture_returns_503_with_message_when_camera_unavailable(tmp_path):
+    def get_camera():
+        raise RuntimeError("Device or resource busy")
+
+    app = create_app(get_camera, tmp_dir=tmp_path / "tmp", storage_dir=tmp_path / "photos")
+    client = app.test_client()
+
+    response = client.post("/capture")
+
+    assert response.status_code == 503
+    assert "busy" in response.get_json()["error"]
+
+
+def test_delete_photo_does_not_require_camera(tmp_path):
+    app = create_app(_unused_camera, tmp_dir=tmp_path / "tmp", storage_dir=tmp_path / "photos")
+    client = app.test_client()
+
+    response = client.delete("/photo/does-not-exist")
+
+    assert response.status_code == 204
+
+
 def make_photo(storage_dir: Path, day: str, time_str: str) -> None:
     day_dir = storage_dir / day
     day_dir.mkdir(parents=True, exist_ok=True)
@@ -93,7 +132,7 @@ def test_photos_endpoint_returns_zip_of_matching_date_range(tmp_path):
     make_photo(storage_dir, "2026-07-17", "090000")
 
     app = create_app(
-        FakeCamera(),
+        _unused_camera,
         tmp_dir=tmp_path / "tmp",
         storage_dir=storage_dir,
     )
@@ -114,7 +153,7 @@ def test_photos_endpoint_empty_range_returns_empty_zip(tmp_path):
     make_photo(storage_dir, "2026-07-15", "090000")
 
     app = create_app(
-        FakeCamera(),
+        _unused_camera,
         tmp_dir=tmp_path / "tmp",
         storage_dir=storage_dir,
     )
@@ -132,7 +171,7 @@ def test_photos_endpoint_malformed_date_returns_400(tmp_path):
     make_photo(storage_dir, "2026-07-15", "090000")
 
     app = create_app(
-        FakeCamera(),
+        _unused_camera,
         tmp_dir=tmp_path / "tmp",
         storage_dir=storage_dir,
     )
@@ -150,7 +189,7 @@ def test_photos_endpoint_cleans_up_temp_zip_file(tmp_path):
     make_photo(storage_dir, "2026-07-16", "090000")
 
     app = create_app(
-        FakeCamera(),
+        _unused_camera,
         tmp_dir=tmp_dir,
         storage_dir=storage_dir,
     )

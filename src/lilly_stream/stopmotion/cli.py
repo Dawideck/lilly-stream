@@ -18,12 +18,21 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO)
     config = load_config(args.config)
-    camera = Camera()
-    app = create_app(camera, tmp_dir=args.tmp_dir, storage_dir=config.capture.storage_dir)
+
+    camera_holder: dict[str, Camera] = {}
+
+    def get_camera() -> Camera:
+        if "camera" not in camera_holder:
+            camera_holder["camera"] = Camera()
+        return camera_holder["camera"]
+
+    app = create_app(get_camera, tmp_dir=args.tmp_dir, storage_dir=config.capture.storage_dir)
     try:
         app.run(host="0.0.0.0", port=args.port)
     finally:
-        camera.close()
+        camera = camera_holder.get("camera")
+        if camera is not None:
+            camera.close()
 
 
 if __name__ == "__main__":

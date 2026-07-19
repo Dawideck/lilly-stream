@@ -7,17 +7,23 @@ from pathlib import Path
 
 from flask import Flask, Response, request, send_file
 
+from lilly_stream.capture.camera import CameraError
 from lilly_stream.timelapse.selection import list_entries_in_range
 
 
-def create_app(camera, *, tmp_dir: Path, storage_dir: Path) -> Flask:
+def create_app(get_camera, *, tmp_dir: Path, storage_dir: Path) -> Flask:
     app = Flask(__name__)
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
     @app.route("/snapshot", methods=["POST"])
     def snapshot():
         tmp_path = tmp_dir / f"snapshot-{uuid.uuid4()}.jpg"
-        camera.capture_preview(tmp_path)
+        try:
+            get_camera().capture_preview(tmp_path)
+        except CameraError as exc:
+            return {"error": str(exc)}, 503
+        except Exception as exc:
+            return {"error": f"Camera unavailable: {exc}"}, 503
         data = tmp_path.read_bytes()
         tmp_path.unlink()
         return Response(data, mimetype="image/jpeg")
@@ -26,7 +32,12 @@ def create_app(camera, *, tmp_dir: Path, storage_dir: Path) -> Flask:
     def capture():
         photo_id = str(uuid.uuid4())
         photo_path = tmp_dir / f"{photo_id}.jpg"
-        camera.capture(photo_path)
+        try:
+            get_camera().capture(photo_path)
+        except CameraError as exc:
+            return {"error": str(exc)}, 503
+        except Exception as exc:
+            return {"error": f"Camera unavailable: {exc}"}, 503
         response = send_file(photo_path, mimetype="image/jpeg")
         response.headers["X-Photo-Id"] = photo_id
         return response
